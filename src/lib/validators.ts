@@ -175,7 +175,9 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type PasswordResetInput = z.infer<typeof passwordResetSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
-export type CreateBookInput = z.infer<typeof createBookSchema>;
+export type CreateBookInput = Omit<z.infer<typeof createBookSchema>, "bookType"> & {
+  bookType: "free" | "paid";
+};
 export type UpdateBookInput = z.infer<typeof updateBookSchema>;
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type VerifyPaymentInput = z.infer<typeof verifyPaymentSchema>;
