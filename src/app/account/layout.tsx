@@ -1,0 +1,17 @@
+import Navbar from "@/components/shop/Navbar";
+import Footer from "@/components/shop/Footer";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "My Account | PageVault",
+};
+
+export default function AccountLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <Navbar />
+      <main style={{ minHeight: "calc(100vh - 64px)" }}>{children}</main>
+      <Footer />
+    </>
+  );
+}

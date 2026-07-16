@@ -1,0 +1,96 @@
+// ============================================================
+// Firestore Security Rules
+// ============================================================
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // ── admins ────────────────────────────────────────────
+    match /admins/{adminId} {
+      allow read: if isAuthenticated() && request.auth.uid == adminId;
+      allow write: if isAdmin();
+    }
+
+    // ── books ─────────────────────────────────────────────
+    match /books/{bookId} {
+      // Public can read published books only
+      allow read: if resource.data.status == 'published';
+      // Admin can read all (incl. drafts)
+      allow read: if isAdmin();
+      // Only admins can create/update/delete
+      allow write: if isAdmin();
+    }
+
+    // ── customers ─────────────────────────────────────────
+    match /customers/{customerId} {
+      // Customer can read/update their own profile
+      allow read, update: if isOwner(customerId);
+      // Admin can read all
+      allow read: if isAdmin();
+      // Only server-side (Firebase Admin SDK) can create
+      allow create: if isAuthenticated() && request.auth.uid == customerId;
+      // Only admin can delete
+      allow delete: if isAdmin();
+    }
+
+    // ── orders ────────────────────────────────────────────
+    match /orders/{orderId} {
+      // Owner or admin can read
+      allow read: if isAuthenticated() &&
+        (resource.data.customerId == request.auth.uid || isAdmin());
+      // No client-side writes - all order operations via server API
+      allow write: if false;
+    }
+
+    // ── coupons ───────────────────────────────────────────
+    match /coupons/{couponId} {
+      // Public read for active coupons only (code needed to redeem anyway)
+      allow read: if resource.data.isActive == true;
+      // Admin full access
+      allow read, write: if isAdmin();
+    }
+
+    // ── reviews ───────────────────────────────────────────
+    match /reviews/{reviewId} {
+      // Public read
+      allow read: if true;
+      // Authenticated customer can create/update their own review
+      allow create: if isAuthenticated() &&
+        request.resource.data.customerId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.customerId == request.auth.uid;
+      // Admin or owner can delete
+      allow delete: if isAdmin() ||
+        (isAuthenticated() && resource.data.customerId == request.auth.uid);
+    }
+
+    // ── settings ──────────────────────────────────────────
+    match /settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── auditLogs ─────────────────────────────────────────
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
