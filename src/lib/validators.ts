@@ -66,7 +66,7 @@ export const bookFieldsSchema = z.object({
   tags: z.array(z.string()).max(10),
   price: z.number().min(0, "Price cannot be negative").max(99999),
   originalPrice: z.number().min(0).optional(),
-  bookType: z.enum(["free", "paid"]).optional().default("paid"),
+  bookType: z.enum(["free", "paid"]),
   status: z.enum(["published", "draft"]),
   pageCount: z.number().int().positive().optional(),
   language: z.string().min(1),
@@ -175,9 +175,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type PasswordResetInput = z.infer<typeof passwordResetSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
-export type CreateBookInput = Omit<z.infer<typeof createBookSchema>, "bookType"> & {
-  bookType: "free" | "paid";
-};
+export type CreateBookInput = z.infer<typeof createBookSchema>;
 export type UpdateBookInput = z.infer<typeof updateBookSchema>;
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type VerifyPaymentInput = z.infer<typeof verifyPaymentSchema>;
